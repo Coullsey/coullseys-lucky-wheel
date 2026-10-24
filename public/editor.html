@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coullsey's Lucky Wheel</title>
+<link rel="icon" type="image/png" href="/logo">
+<script>
+  // Apply the saved theme before anything draws, same as Gift Looper
+  try { document.documentElement.dataset.theme = localStorage.getItem('wheelTheme') || 'saiyan'; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* THEMES: matched to Coullsey's Gift Looper. Default = Saiyan Gold. */
+  :root { --bg: #000000; --bg-2: #070707; --bg-3: #0a0a0a; --card: #0d0d0d; --input: #151515; --border: #1c1c1c; --border-2: #2a2a2a;
+          --check-1: #0d0d0d; --check-2: #111111; --text: #ffffff; --text-2: #999999; --muted: #6a6a6a; --faint: #4a4a4a;
+          --accent: #f7a400; --accent-2: #ff6b00; --accent-light: #ffd700; --accent-rgb: 247,164,0; --on-accent: #000000; }
+  :root[data-theme="blue"]   { --bg: #000307; --bg-2: #030912; --bg-3: #050d18; --card: #07101c; --input: #0c1726; --border: #13233a; --border-2: #1d3352; --check-1: #050c16; --check-2: #08121f;
+                               --accent: #29b6ff; --accent-2: #2f6bff; --accent-light: #a8e6ff; --accent-rgb: 41,182,255; }
+  :root[data-theme="rose"]   { --bg: #050004; --bg-2: #0d0409; --bg-3: #12060d; --card: #160811; --input: #1f0c18; --border: #2c1222; --border-2: #3f1a31; --check-1: #0e050a; --check-2: #14070f;
+                               --accent: #ff4fa3; --accent-2: #c2187a; --accent-light: #ffc1e3; --accent-rgb: 255,79,163; }
+  :root[data-theme="ultra"]  { --bg: #030308; --bg-2: #08080f; --bg-3: #0c0c15; --card: #10101b; --input: #171726; --border: #222236; --border-2: #33334f; --check-1: #0a0a12; --check-2: #0f0f19;
+                               --accent: #c9ceff; --accent-2: #8f7dff; --accent-light: #ffffff; --accent-rgb: 201,206,255; }
+  :root[data-theme="namek"]  { --bg: #000502; --bg-2: #030d06; --bg-3: #05120a; --card: #07170c; --input: #0b2113; --border: #12301c; --border-2: #1b4529; --check-1: #040d07; --check-2: #07130b;
+                               --accent: #3ddc84; --accent-2: #0f9d58; --accent-light: #b9f6ca; --accent-rgb: 61,220,132; }
+  :root[data-theme="frieza"] { --bg: #040108; --bg-2: #0a0512; --bg-3: #0e0719; --card: #130a20; --input: #1b0f2d; --border: #29163f; --border-2: #3b2059; --check-1: #0b0614; --check-2: #10091b;
+                               --accent: #b06cff; --accent-2: #6a1bd1; --accent-light: #e3c8ff; --accent-rgb: 176,108,255; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
+  [hidden] { display: none !important; }
+
+  /* HEADER */
+  .header { background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%); border-bottom: 2px solid var(--accent); padding: 8px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; flex-wrap: wrap; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-title { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; background: linear-gradient(to bottom, var(--accent-light), var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px; white-space: nowrap; }
+  .header-title span { font-size: 13px; letter-spacing: 3px; margin-left: 6px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .handle { color: var(--accent); font-weight: 700; font-size: 14px; }
+  /* app version + updates (desktop app only), same as Gift Looper */
+  .version { color: var(--text-2); font-size: 12px; font-weight: 700; }
+  .update-pill { background: linear-gradient(135deg, #27ae60, #2ecc71); color: #ffffff; border: none; border-radius: 14px; padding: 5px 12px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .update-pill.busy { background: var(--input); color: var(--text-2); border: 1px solid var(--border-2); cursor: default; }
+  .check-update { background: none; border: 1px solid var(--border-2); color: var(--text-2); border-radius: 12px; padding: 3px 10px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .check-update:hover { color: var(--accent); border-color: var(--accent); }
+  .check-update:disabled { opacity: 0.5; cursor: default; }
+  .update-msg { font-size: 12px; color: var(--text-2); }
+  .update-msg.ok { color: #27ae60; }
+  .update-msg.error { color: #e74c3c; }
+  .status { font-size: 13px; font-weight: 700; color: var(--text-2); }
+  .status.dirty { color: var(--accent-light); }
+  .status.live { color: #2ecc71; }
+  .page-name { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text-2); }
+
+  /* CONTROLS */
+  input[type=text], input[type=number], select { padding: 6px 8px; background: var(--input); border: 1px solid var(--border-2); color: var(--text); border-radius: 4px; font-size: 14px; font-family: 'Rajdhani', sans-serif; font-weight: 600; min-width: 0; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .btn { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: box-shadow 0.15s, background 0.15s, color 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .btn-gold { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+  .btn-gold:hover { box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.4); }
+  .btn-dark { background: var(--input); color: var(--accent); border: 1px solid var(--accent); }
+  .btn-dark:hover { background: var(--accent); color: var(--on-accent); }
+  .btn-x { background: #3a1414; color: #e74c3c; border: 1px solid #5a1f1f; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; border-radius: 4px; cursor: pointer; font-family: sans-serif; flex-shrink: 0; }
+  .btn-x:hover { background: #e74c3c; color: #fff; }
+  .btn-x.small { width: 26px; height: 26px; font-size: 12px; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-2); cursor: pointer; user-select: none; }
+  .toggle input { appearance: none; width: 22px; height: 22px; border: 1px solid var(--border-2); border-radius: 4px; background: var(--input); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; }
+  .toggle input:checked { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: var(--accent); }
+  .toggle input:checked::after { content: '✔'; color: var(--on-accent); font-size: 13px; font-family: sans-serif; }
+  .spacer { flex: 1; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .card-title { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 10px; letter-spacing: 1px; }
+  .hint { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+
+  /* VIEWS */
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .scroll { flex: 1; overflow-y: auto; padding: 16px 20px 20px; }
+  .footer { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 12px 20px; background: var(--bg-2); border-top: 1px solid var(--border); flex-shrink: 0; }
+  .save { font-size: 15px; padding: 12px 64px; letter-spacing: 3px; }
+
+  /* START MENU */
+  #menu { align-items: center; justify-content: center; gap: 26px; padding: 30px 16px; overflow-y: auto;
+          background: radial-gradient(circle at 50% 40%, rgba(var(--accent-rgb), 0.12), transparent 60%), var(--bg); }
+  .menu-logo { width: min(400px, 46vh, 86vw); height: auto; filter: drop-shadow(0 0 30px rgba(var(--accent-rgb), 0.35)); animation: float 4s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-8px) scale(1.015); } }
+  .menu-buttons { display: grid; gap: 12px; width: 300px; max-width: 100%; }
+  .menu-btn { font-size: 16px; padding: 16px; letter-spacing: 4px; border-radius: 6px; }
+  .menu-foot { display: flex; gap: 16px; align-items: center; color: var(--muted); font-size: 13px; font-weight: 700; flex-wrap: wrap; justify-content: center; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #e74c3c; margin-right: 6px; }
+  .dot.on { background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+
+  /* WHEELS */
+  .toolbar { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; padding: 12px 20px; background: var(--bg-2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .wheel-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .wheel-tab { background: var(--input); color: var(--text-2); border: 1px solid var(--border-2); border-radius: 6px; padding: 8px 14px; font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+  .wheel-tab small { font-family: 'Rajdhani', sans-serif; font-size: 11px; color: var(--muted); margin-left: 6px; letter-spacing: 0; text-transform: none; }
+  .wheel-tab:hover { border-color: var(--accent); color: var(--text); }
+  .wheel-tab.on { background: rgba(var(--accent-rgb), 0.12); border-color: var(--accent); color: var(--accent); }
+  .wheel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+  .wheel-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-3); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .wheel-name { width: 170px; font-family: 'Orbitron', sans-serif !important; font-size: 14px !important; font-weight: 900 !important; text-transform: uppercase; color: var(--accent) !important; text-align: center; letter-spacing: 1px; }
+  .wheel-url { flex: 1; min-width: 200px; font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Consolas, monospace; }
+  .meta { font-size: 12px; color: var(--muted); white-space: nowrap; font-weight: 700; }
+  .seg { display: inline-flex; flex-shrink: 0; border: 1px solid var(--border-2); border-radius: 4px; overflow: hidden; }
+  .seg button { white-space: nowrap; }
+  .seg button { background: var(--input); color: var(--muted); border: 0; padding: 7px 10px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--border-2); }
+  .seg button.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+  .id-pill { display: inline-flex; align-items: center; gap: 4px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+  .id-pill input { width: 44px; text-align: center; padding: 4px; font-size: 13px; }
+  .boxes { display: flex; gap: 10px; padding: 12px; overflow-x: auto; scroll-snap-type: x proximity; }
+  .boxes::-webkit-scrollbar { height: 10px; }
+  .boxes::-webkit-scrollbar-track { background: var(--bg-2); }
+  .boxes::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 5px; }
+  .boxes::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+  .box { flex: 0 0 200px; background: var(--bg-2); border: 1px solid var(--border-2); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 7px; scroll-snap-align: start; }
+  .box:hover { border-color: var(--faint); }
+  .box-top { display: flex; align-items: center; gap: 6px; }
+  .box-num { font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; color: var(--muted); flex: 1; letter-spacing: 1px; }
+  .swatch-btn { width: 44px; height: 26px; border-radius: 4px; border: 1px solid var(--border-2); cursor: pointer; position: relative; padding: 0; }
+  .swatch-btn::after { content: '▾'; position: absolute; right: -14px; top: 4px; color: var(--text-2); font-size: 11px; }
+  .swatch-btn:hover { border-color: var(--accent); }
+  .freq { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .freq label { font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); }
+  .freq input { width: 62px; text-align: center; }
+  .chance { font-size: 12px; font-weight: 700; color: var(--accent); min-width: 40px; text-align: right; }
+  .box-text { font-size: 16px !important; font-weight: 700 !important; }
+  .box-row { display: flex; align-items: center; gap: 5px; }
+  .box-row > input, .box-row > .key-btn { flex: 1; min-width: 0; }
+  .key-btn { height: 30px; padding: 0 8px; background: var(--input); border: 1px dashed var(--border-2); color: var(--muted); border-radius: 4px; font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .key-btn:hover { border-color: var(--accent); color: var(--text); }
+  .key-btn.set { border-style: solid; color: var(--accent); }
+  .key-btn.rec { border: 1px solid var(--accent-light); color: var(--accent-light); animation: blink 0.9s ease-in-out infinite; }
+  @keyframes blink { 50% { background: rgba(var(--accent-rgb), 0.18); } }
+  .thumb { width: 20px; height: 20px; object-fit: cover; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+  .mini-toggle { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: var(--text-2); cursor: pointer; flex-shrink: 0; }
+  .mini-toggle input { accent-color: var(--accent); }
+  .key-test { width: 26px; height: 26px; padding: 0; background: var(--input); color: var(--accent); border: 1px solid var(--border-2); border-radius: 4px; cursor: pointer; flex-shrink: 0; font-size: 11px; }
+  .key-test:hover { border-color: var(--accent); }
+  .box-hook { font-size: 11px !important; color: var(--text-2) !important; font-family: Consolas, monospace !important; font-weight: 400 !important; }
+  .add-tile { flex: 0 0 90px; border: 1px dashed var(--border-2); border-radius: 6px; background: transparent; color: var(--muted); font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
+  .add-tile:hover { color: var(--accent); border-color: var(--accent); }
+  .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 15px; }
+
+  /* PLAY */
+  .play { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+  .stage { position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+           background: repeating-conic-gradient(var(--check-1) 0 25%, var(--check-2) 0 50%) 0 0 / 24px 24px; border-right: 1px solid var(--border); }
+  .stage iframe { width: min(100%, calc(100vh - 140px)); aspect-ratio: 1; border: 0; background: transparent; }
+  #customize .play { min-height: 0; }
+  .colour-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .colour-row:last-child { border-bottom: 0; }
+  .colour-row span { font-size: 14px; font-weight: 600; }
+  .colour-row small { display: block; font-size: 11px; color: var(--muted); }
+  .colour-row input[type=color] { width: 44px; height: 30px; border: 1px solid var(--border-2); border-radius: 4px; background: var(--input); padding: 1px; cursor: pointer; flex-shrink: 0; }
+  .font-sample { margin: 4px 0 10px; padding: 10px; border-radius: 6px; background: #2b2b2b; color: #fff; font-size: 26px; text-align: center; -webkit-text-stroke: 1.5px #111; paint-order: stroke fill; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .upload-btn { width: 100%; cursor: pointer; }
+  .preview-sound { position: absolute; right: 14px; top: 10px; z-index: 2; }
+  .preview-sound.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--on-accent); border-color: transparent; }
+  .stage-label { position: absolute; left: 14px; top: 12px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--muted); }
+  .side { overflow-y: auto; overflow-x: hidden; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; background: var(--bg-2); }
+  .side .card, .link-row, .field, .hist { min-width: 0; }
+  .switch { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+  .switch input { appearance: none; width: 54px; height: 28px; border-radius: 14px; background: #3a1414; border: 1px solid #5a1f1f; position: relative; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #e74c3c; transition: 0.2s; }
+  .switch input:checked { background: rgba(46, 204, 113, 0.18); border-color: #2ecc71; }
+  .switch input:checked::after { left: 29px; background: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
+  .switch .label { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 1px; }
+  .switch .label.on { color: #2ecc71; }
+  .switch .label.off { color: #e74c3c; }
+  .links { display: grid; gap: 6px; margin-top: 12px; }
+  .link-row { display: flex; align-items: center; gap: 8px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; }
+  .link-row b { font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 1px; color: var(--accent); width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link-row > span:not(.seg) { flex: 1; min-width: 0; font-family: Consolas, monospace; font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .link-row .btn { padding: 5px 8px; font-size: 9px; }
+  .link-row .seg button { padding: 5px 6px; font-size: 8px; }
+  .field { display: grid; gap: 4px; margin-bottom: 10px; }
+  .field > label { font-size: 12px; color: var(--text-2); font-weight: 700; }
+  .spin-btn { width: 100%; font-size: 16px; padding: 14px; letter-spacing: 4px; }
+  .live-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 700; color: var(--text-2); }
+  .history { display: grid; gap: 5px; max-height: 330px; overflow-y: auto; }
+  .hist { display: grid; grid-template-columns: 44px 1fr; gap: 2px 8px; padding: 6px 8px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 4px; }
+  .hist .t { font-size: 11px; color: var(--muted); grid-row: span 2; align-self: center; }
+  .hist .u { font-weight: 700; color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist .r { font-size: 13px; color: var(--text-2); }
+  .hist .r b { color: var(--text); }
+  .tag { font-size: 10px; font-weight: 700; color: var(--muted); border: 1px solid var(--border-2); border-radius: 3px; padding: 0 4px; margin-left: 4px; }
+
+  /* SETTINGS */
+  .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; max-width: 1100px; margin: 0 auto; }
+  .form-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .form-row > span { font-size: 15px; color: var(--text); font-weight: 600; }
+  .form-row small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .form-row input[type=number] { width: 80px; text-align: center; }
+  .url-box { display: flex; gap: 8px; }
+  .url-box input { flex: 1; font-family: Consolas, monospace; font-size: 12px; color: var(--text-2); }
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .theme-swatch { border: 2px solid var(--border-2); border-radius: 8px; padding: 8px; cursor: pointer; text-align: left; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; background: var(--input); color: var(--text); }
+  .theme-swatch i { display: block; height: 8px; border-radius: 4px; margin-bottom: 6px; }
+  .theme-swatch.on { border-color: var(--accent); }
+
+  /* COLOUR PICKER */
+  .picker { position: fixed; z-index: 20; background: var(--bg-3); border: 1px solid var(--accent); border-radius: 8px; padding: 10px; display: none; box-shadow: 0 8px 30px #000c; }
+  .picker.show { display: block; }
+  .picker-grid { display: grid; grid-template-columns: repeat(5, 34px); gap: 7px; }
+  .picker-grid button { width: 34px; height: 34px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; }
+  .picker-grid button:hover, .picker-grid button.on { border-color: #fff; }
+  .picker-custom { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-2); font-size: 13px; color: var(--text-2); font-weight: 700; }
+  .picker-photo { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-2); }
+  .picker-photo .btn { flex: 1; cursor: pointer; }
+  .picker-custom input { width: 34px; height: 28px; border: 1px solid var(--border-2); border-radius: 4px; background: var(--input); padding: 1px; cursor: pointer; }
+
+  #toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%) translateY(30px); opacity: 0; background: var(--bg-3); border: 1px solid var(--accent); color: var(--accent); padding: 9px 18px; border-radius: 6px; font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; transition: 0.2s; pointer-events: none; z-index: 30; }
+  #toast.show { transform: translateX(-50%); opacity: 1; }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; }
+    .play { grid-template-columns: 1fr; }
+    .stage { border-right: 0; border-bottom: 1px solid var(--border); }
+    .stage iframe { width: min(100%, 70vh); }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <button class="btn btn-dark" id="backBtn" hidden>◀ Menu</button>
+    <div class="header-title">COULLSEY'S<span>LUCKY WHEEL</span></div>
+    <span class="page-name" id="pageName"></span>
+  </div>
+  <div class="header-right">
+    <button class="update-pill" id="updateBtn" hidden></button>
+    <span class="update-msg" id="updateMsg"></span>
+    <span class="version" id="appVersion"></span>
+    <button class="check-update" id="checkUpdateBtn" hidden title="Check GitHub for a newer version">↻ Check for updates</button>
+    <span class="status" id="status">Loading…</span>
+    <span class="handle">@coullsey_</span>
+  </div>
+</div>
+
+<!-- START MENU -->
+<section class="view" id="menu">
+  <img class="menu-logo" src="/logo" alt="Coullsey Wheel">
+
+  <div class="menu-buttons">
+    <button class="btn btn-gold menu-btn" data-go="play">▶ Play</button>
+    <button class="btn btn-dark menu-btn" data-go="wheels">Wheels</button>
+    <button class="btn btn-dark menu-btn" data-go="customize">Customize</button>
+    <button class="btn btn-dark menu-btn" data-go="settings">Settings</button>
+  </div>
+  <div class="menu-foot">
+    <span><span class="dot" id="menuDot"></span><span id="menuAuto">Automatic spins</span></span>
+    <span id="menuWheels"></span>
+  </div>
+</section>
+
+<!-- WHEELS -->
+<section class="view" id="wheels" hidden>
+  <div class="toolbar">
+    <div class="wheel-tabs" id="wheelTabs"></div>
+    <button class="btn btn-gold" id="newWheel">+ New wheel</button>
+    <span class="spacer"></span>
+    <span class="hint" style="margin:0">Each wheel has its own webhook. Frequency = how likely a box is to land.</span>
+  </div>
+  <div class="scroll" id="wheelList"></div>
+  <div class="footer">
+    <button class="btn btn-gold save" data-save>Save</button>
+  </div>
+</section>
+
+<!-- PLAY -->
+<section class="view" id="play" hidden>
+  <div class="play">
+    <div class="stage">
+      <span class="stage-label">LIVE PREVIEW</span>
+      <button class="btn btn-dark preview-sound" id="previewSound" title="Only changes this preview, not OBS"></button>
+      <iframe id="preview" title="Wheel preview" allow="autoplay"></iframe>
+    </div>
+    <div class="side">
+      <div class="card">
+        <div class="card-title">AUTOMATIC</div>
+        <label class="switch">
+          <input type="checkbox" id="autoSwitch">
+          <span class="label" id="autoLabel">OFF</span>
+        </label>
+        <p class="hint" style="margin:10px 0 0">When ON, these webhooks spin the wheel with the viewer's username (e.g. from TikFinity).</p>
+        <div class="links" id="autoLinks"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">MANUAL SPIN</div>
+        <div class="field">
+          <label for="manualWheel">Wheel</label>
+          <select id="manualWheel"></select>
+        </div>
+        <div class="field">
+          <label>Shows as</label>
+          <div id="manualStyle"></div>
+        </div>
+        <button class="btn btn-gold spin-btn" id="manualSpin">Spin</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">LIVE</div>
+        <div class="live-row">
+          <span id="queueInfo">Idle</span>
+          <span class="spacer"></span>
+          <button class="btn btn-dark" id="clearQueue">Clear queue</button>
+        </div>
+        <div class="history" id="history"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CUSTOMIZE -->
+<section class="view" id="customize" hidden>
+  <div class="play">
+    <div class="stage">
+      <span class="stage-label">PREVIEW - changes show here straight away; press Save to put them on stream</span>
+      <iframe id="lookPreview" title="Overlay preview"></iframe>
+    </div>
+    <div class="side">
+      <div class="card">
+        <div class="card-title">TRY IT</div>
+        <div class="field">
+          <label for="lookWheel">Wheel</label>
+          <select id="lookWheel"></select>
+        </div>
+        <button class="btn btn-gold spin-btn" id="demoSpin" title="Only spins here - no rewards, keys or OBS">▶ Demo spin</button>
+        <p class="hint" style="margin:8px 0 0">Demo spins only happen in this preview: no rewards, no keys, nothing on stream.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">FONT</div>
+        <div class="field">
+          <select id="lookFont"></select>
+        </div>
+        <div class="font-sample" id="fontSample">Coullsey Wheel 123!</div>
+        <label class="btn btn-dark upload-btn">
+          ⬆ Upload a font (.ttf / .otf / .woff)
+          <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2" hidden>
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">TEXT</div>
+        <label class="toggle" style="margin-bottom:6px"><input type="checkbox" id="lookShowPrize"> Show prize text</label>
+        <div class="field">
+          <input type="text" id="lookPrizeText" maxlength="80" placeholder="{prize}!">
+          <small class="hint" style="margin:0">{prize} = what they won, {user} = their name, {wheel} = wheel name</small>
+        </div>
+        <label class="toggle" style="margin:10px 0 6px"><input type="checkbox" id="lookShowQueue"> Show queue text</label>
+        <div class="field">
+          <input type="text" id="lookQueueText" maxlength="80" placeholder="{count} more spin{s} queued">
+          <small class="hint" style="margin:0">{count} = spins waiting, {s} = adds an "s" when it's more than one</small>
+        </div>
+        <label class="colour-row"><span>Queue text colour</span><input type="color" id="lookQueueColor"></label>
+        <label class="colour-row"><span>Queue text size</span><input type="range" id="lookQueueSize" min="1.5" max="8" step="0.1" style="flex:1;max-width:160px;accent-color:var(--accent)"></label>
+        <p class="hint" style="margin:6px 0 0">The preview shows a sample queue line. Use Demo spin to see the prize text.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">COLOURS</div>
+        <div id="lookColours"></div>
+        <button class="btn btn-dark" id="lookReset" style="width:100%;margin-top:6px">Reset to default look</button>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <button class="btn btn-gold save" data-save>Save</button>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section class="view" id="settings" hidden>
+  <div class="scroll">
+    <div class="settings-grid">
+      <div class="card">
+        <div class="card-title">WHEEL</div>
+        <label class="form-row"><span>Spin time<small>Seconds the wheel spins for</small></span><input type="number" id="spinSeconds" min="1" max="30" step="0.5"></label>
+        <label class="form-row"><span>Show result for<small>Seconds the winner card stays up</small></span><input type="number" id="resultSeconds" min="0" max="30" step="0.5"></label>
+        <label class="form-row"><span>Always show wheel<small>Keep it on stream when nobody is spinning</small></span><span class="toggle"><input type="checkbox" id="alwaysVisible"></span></label>
+        <label class="form-row"><span>Sounds<small>Wheel Spin.mp3 while it spins, Ding.mp3 when it lands</small></span><span class="toggle"><input type="checkbox" id="sound"></span></label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">REWARDS</div>
+        <label class="form-row"><span>Post reward webhooks<small>Send each box's webhook when it lands (your reward server)</small></span><span class="toggle"><input type="checkbox" id="postWebhooks"></span></label>
+        <label class="form-row"><span>Press keybinds<small>Press each box's key when it lands, into whatever window is focused (your game)</small></span><span class="toggle"><input type="checkbox" id="pressKeys"></span></label>
+        <div class="card-title" style="margin-top:16px">OVERLAY</div>
+        <p class="hint">Add this as a Browser Source in OBS or TikTok LIVE Studio (1080 × 1080, transparent).</p>
+        <div class="url-box">
+          <input type="text" id="overlayUrl" readonly>
+          <button class="btn btn-dark" id="copyOverlay">Copy</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">APPEARANCE</div>
+        <div class="themes" id="themes"></div>
+      </div>
+
+      <div class="card" id="appCard" hidden>
+        <div class="card-title">APP</div>
+        <p class="hint">Your wheels, photos, fonts and the wheel's log (wheel.log) are kept here. To swap the spin/ding sounds or the logo, put a file with the same name (Wheel Spin.mp3, Ding.mp3, Coullsey Wheel.png) in this folder.</p>
+        <button class="btn btn-dark" id="openDataFolder" style="width:100%">Open data folder</button>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <button class="btn btn-gold save" data-save>Save</button>
+  </div>
+</section>
+
+<div class="picker" id="picker">
+  <div class="picker-grid" id="pickerGrid"></div>
+  <label class="picker-custom">Custom <input type="color" id="pickerCustom"></label>
+  <div class="picker-photo">
+    <label class="btn btn-dark" id="pickerPhotoBtn">🖼 Upload photo
+      <input type="file" id="pickerPhoto" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+    </label>
+    <button class="btn-x small" id="pickerNoPhoto" title="Remove photo">✕</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// Same 14 looks as the old LuckyWheel-Tool colour dropdown
+const PALETTE = [
+  { color: '#1c1c1c', style: 'solid' }, { color: '#1e88ff', style: 'solid' }, { color: '#1de9b6', style: 'solid' },
+  { color: '#8fe31c', style: 'solid' }, { color: '#ff9f1a', style: 'solid' }, { color: '#ff3d1f', style: 'solid' },
+  { color: '#ff1f5a', style: 'solid' }, { color: '#ff2fd0', style: 'solid' }, { color: '#9b30ff', style: 'solid' },
+  { color: '#1565ff', style: 'ring' }, { color: '#1fc81f', style: 'ring' }, { color: '#e01818', style: 'ring' },
+  { color: '#b020e0', style: 'ring' }, { color: '#ff0000', style: 'rainbow' },
+];
+
+const THEMES = [
+  { id: 'saiyan', name: 'Saiyan Gold', c: 'linear-gradient(90deg,#ffd700,#f7a400,#ff6b00)' },
+  { id: 'blue', name: 'Blue', c: 'linear-gradient(90deg,#a8e6ff,#29b6ff,#2f6bff)' },
+  { id: 'rose', name: 'Rose', c: 'linear-gradient(90deg,#ffc1e3,#ff4fa3,#c2187a)' },
+  { id: 'ultra', name: 'Ultra Instinct', c: 'linear-gradient(90deg,#ffffff,#c9ceff,#8f7dff)' },
+  { id: 'namek', name: 'Namek', c: 'linear-gradient(90deg,#b9f6ca,#3ddc84,#0f9d58)' },
+  { id: 'frieza', name: 'Frieza', c: 'linear-gradient(90deg,#e3c8ff,#b06cff,#6a1bd1)' },
+];
+
+const VIEWS = { menu: '', wheels: 'WHEELS', play: 'PLAY', customize: 'CUSTOMIZE', settings: 'SETTINGS' };
+
+let state = { settings: {}, wheels: [] };
+let port = location.port || 80;
+let dirty = false;
+let spinningNow = false;
+let queued = 0;
+
+const $ = id => document.getElementById(id);
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function setDirty(d) {
+  dirty = d;
+  $('status').textContent = d ? '● Unsaved changes' : '● Saved';
+  $('status').className = 'status ' + (d ? 'dirty' : 'live');
+}
+
+function base() {
+  return location.protocol + '//' + location.hostname + ':' + port;
+}
+
+function triggerUrl(w) {
+  return base() + '/wheel?id=' + encodeURIComponent(w.id) + '&userName={nickname}';
+}
+
+async function copy(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  toast('Copied!');
+}
+
+function el(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k in e) e[k] = v;
+    else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+
+function lookCss(s) {
+  let colour = s.color;
+  if (s.style === 'rainbow') colour = 'conic-gradient(#ff2b2b,#ffb000,#f7ff00,#2bff4a,#00c8ff,#7a2bff,#ff2bd6,#ff2b2b)';
+  if (s.style === 'ring') colour = 'repeating-radial-gradient(circle, ' + s.color + ' 0 4px, #0007 4px 6px)';
+  // a box photo shows on top of its colour
+  return s.image ? 'url("/images/' + encodeURIComponent(s.image) + '") center / cover no-repeat, ' + colour : colour;
+}
+
+function totalOf(w) {
+  return w.slices.reduce((sum, s) => sum + Math.max(0, Number(s.frequency) || 0), 0);
+}
+
+// ---------- navigation ----------
+function show(view) {
+  if (!(view in VIEWS)) view = 'menu';
+  for (const v of Object.keys(VIEWS)) $(v).hidden = v !== view;
+  $('backBtn').hidden = view === 'menu';
+  $('pageName').textContent = VIEWS[view] ? '/ ' + VIEWS[view] : '';
+  closePicker();
+  if (view === 'play') {
+    // load the preview only while Play is open
+    if (!$('preview').src) $('preview').src = '/overlay?preview';
+    renderPlay();
+  } else {
+    $('preview').removeAttribute('src');
+  }
+  if (view === 'customize') {
+    if (!$('lookPreview').src) $('lookPreview').src = '/overlay?preview';
+    renderCustomize();
+  } else {
+    $('lookPreview').removeAttribute('src');
+  }
+  if (view === 'wheels') renderWheels();
+  if (view === 'settings') renderSettings();
+  if (view === 'menu') renderMenu();
+}
+
+function go(view) {
+  location.hash = view === 'menu' ? '' : view;
+  show(view);
+}
+
+window.addEventListener('hashchange', () => show(location.hash.slice(1) || 'menu'));
+document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+$('backBtn').onclick = () => go('menu');
+
+// ---------- menu ----------
+function renderMenu() {
+  const on = !!state.settings.acceptWebhooks;
+  $('menuDot').className = 'dot' + (on ? ' on' : '');
+  $('menuAuto').textContent = 'Automatic spins ' + (on ? 'ON' : 'OFF');
+  $('menuWheels').textContent = state.wheels.length + ' wheel' + (state.wheels.length === 1 ? '' : 's');
+}
+
+// ---------- wheels ----------
+// One tab per wheel; only the wheel you're editing is shown
+let editingWheel = null;
+try { editingWheel = localStorage.getItem('editingWheel'); } catch (e) {}
+
+function selectWheel(id) {
+  editingWheel = id;
+  try { localStorage.setItem('editingWheel', id); } catch (e) {}
+  renderWheels();
+}
+
+function renderWheelTabs() {
+  $('wheelTabs').replaceChildren(...state.wheels.map(w => el('button', {
+    class: 'wheel-tab' + (w.id === editingWheel ? ' on' : ''),
+    onclick: () => selectWheel(w.id),
+  }, w.name || 'Wheel ' + w.id, el('small', { textContent: w.slices.length + ' boxes' }))));
+}
+
+function renderWheels() {
+  if (!state.wheels.some(w => w.id === editingWheel)) editingWheel = state.wheels[0] ? state.wheels[0].id : null;
+  renderWheelTabs();
+  const list = $('wheelList');
+  list.replaceChildren();
+  if (!state.wheels.length) {
+    list.append(el('div', { class: 'empty', textContent: 'No wheels yet — press + NEW WHEEL to make one.' }));
+    return;
+  }
+  const wi = state.wheels.findIndex(w => w.id === editingWheel);
+  list.append(renderWheel(state.wheels[wi], wi));
+}
+
+function renderWheel(w, wi) {
+  const boxes = el('div', { class: 'boxes' });
+  const chances = [];
+  const refreshChances = () => {
+    const total = totalOf(w);
+    chances.forEach((c, i) => { c.textContent = total ? (Math.max(0, w.slices[i].frequency) / total * 100).toFixed(1) + '%' : '-'; });
+  };
+
+  w.slices.forEach((s, si) => {
+    const sw = el('button', { class: 'swatch-btn', title: 'Pick colour' });
+    sw.style.background = lookCss(s);
+    sw.addEventListener('click', () => openPicker(sw, s, () => { paintPhoto(); setDirty(true); }));
+    const chance = el('span', { class: 'chance' });
+    chances.push(chance);
+
+    // webhook (optional) with a clear button
+    const hook = el('input', { type: 'text', class: 'box-hook', value: s.webhook, placeholder: 'Webhook (optional)', title: s.webhook });
+    const clearHook = el('button', { class: 'btn-x small', textContent: '✕', title: 'Clear webhook' });
+    const paintHook = () => { hook.title = s.webhook; clearHook.hidden = !s.webhook; };
+    hook.oninput = () => { s.webhook = hook.value; setDirty(true); paintHook(); };
+    clearHook.onclick = () => { s.webhook = ''; hook.value = ''; setDirty(true); paintHook(); };
+    paintHook();
+
+    // keybind (optional): click, then press the key - recorded exactly as pressed
+    const keyBtn = el('button', { class: 'key-btn', title: 'Click, then press the key (hold Ctrl / Shift / Alt too if you want them)' });
+    const testKey = el('button', { class: 'key-test', textContent: '▶', title: 'Test: presses this key in 3 seconds - click into your game first' });
+    const clearKey = el('button', { class: 'btn-x small', textContent: '✕', title: 'Clear keybind' });
+    const paintKey = () => {
+      keyBtn.textContent = s.keybind ? '⌨ ' + keyLabel(s.keybind) : '⌨ Record key (optional)';
+      keyBtn.classList.toggle('set', !!s.keybind);
+      clearKey.hidden = testKey.hidden = !s.keybind;
+    };
+    keyBtn.onclick = () => startRecording(s, keyBtn, paintKey);
+    testKey.onclick = () => testKeybind(s.keybind);
+    clearKey.onclick = () => { s.keybind = ''; setDirty(true); paintKey(); };
+    paintKey();
+
+    // photo (optional): goes on top of the box colour
+    const photoInput = el('input', { type: 'file', accept: 'image/png,image/jpeg,image/gif,image/webp', hidden: true });
+    const photoBtn = el('button', { class: 'key-btn', title: 'Add a photo to this box - it shows on top of the box colour' });
+    const textToggle = el('label', { class: 'mini-toggle', title: 'Show the prize text on top of the photo' }, el('input', { type: 'checkbox' }), 'Text');
+    const clearPhoto = el('button', { class: 'btn-x small', textContent: '✕', title: 'Remove photo' });
+    const paintPhoto = () => {
+      photoBtn.replaceChildren(...(s.image
+        ? [el('img', { class: 'thumb', src: '/images/' + encodeURIComponent(s.image), alt: '' }), s.image]
+        : ['🖼 Add photo (optional)']));
+      photoBtn.classList.toggle('set', !!s.image);
+      clearPhoto.hidden = textToggle.hidden = !s.image;
+      textToggle.querySelector('input').checked = !s.hideText;
+      sw.style.background = lookCss(s);
+    };
+    photoBtn.onclick = () => photoInput.click();
+    photoInput.onchange = async () => {
+      const file = photoInput.files[0];
+      photoInput.value = '';
+      if (!file) return;
+      photoBtn.textContent = 'Uploading…';
+      const d = await uploadFile('image', file);
+      if (!d.ok) toast(d.error);
+      else {
+        s.image = d.name;
+        setDirty(true);
+      }
+      paintPhoto();
+    };
+    textToggle.querySelector('input').onchange = e => { s.hideText = !e.target.checked; setDirty(true); };
+    clearPhoto.onclick = () => { s.image = ''; s.hideText = false; setDirty(true); paintPhoto(); };
+    paintPhoto();
+
+    boxes.append(el('div', { class: 'box' },
+      el('div', { class: 'box-top' },
+        el('span', { class: 'box-num', textContent: '#' + (si + 1) }),
+        sw,
+        el('span', { style: 'width:12px' }),
+        el('button', { class: 'btn-x small', textContent: '✕', title: 'Remove box', onclick: () => { w.slices.splice(si, 1); setDirty(true); renderWheels(); } }),
+      ),
+      el('div', { class: 'freq' },
+        el('label', { textContent: 'FREQUENCY' }),
+        chance,
+        el('input', { type: 'number', min: 0, value: s.frequency, oninput: e => { s.frequency = Math.max(0, Number(e.target.value) || 0); setDirty(true); refreshChances(); } }),
+      ),
+      el('input', { type: 'text', class: 'box-text', value: s.text, placeholder: 'Prize text', oninput: e => { s.text = e.target.value; setDirty(true); } }),
+      el('div', { class: 'box-row' }, hook, clearHook),
+      el('div', { class: 'box-row' }, keyBtn, testKey, clearKey),
+      el('div', { class: 'box-row' }, photoBtn, textToggle, clearPhoto, photoInput),
+    ));
+  });
+  boxes.append(el('button', { class: 'add-tile', textContent: '+ ADD BOX', onclick: () => addBox(w) }));
+  refreshChances();
+
+  // mouse wheel scrolls the box row sideways
+  boxes.addEventListener('wheel', e => {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && boxes.scrollWidth > boxes.clientWidth) {
+      e.preventDefault();
+      boxes.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+
+  const bar = el('div', { class: 'wheel-bar' },
+    el('input', { type: 'text', class: 'wheel-name', value: w.name, oninput: e => { w.name = e.target.value; setDirty(true); renderWheelTabs(); } }),
+    el('button', { class: 'btn btn-gold', textContent: 'Add box', onclick: () => addBox(w) }),
+    el('button', { class: 'btn btn-dark', textContent: 'Copy webhook', onclick: () => copy(triggerUrl(w)) }),
+    el('span', { class: 'wheel-url', textContent: triggerUrl(w), title: triggerUrl(w) }),
+    el('span', { class: 'seg', title: 'How this wheel looks on stream' },
+      ...[['wheel', '◎ WHEEL'], ['bar', '▭ BAR']].map(([v, label]) => el('button', {
+        class: (w.display || 'wheel') === v ? 'on' : '',
+        textContent: label,
+        onclick: () => { w.display = v; setDirty(true); renderWheels(); },
+      }))),
+    el('span', { class: 'meta', textContent: w.slices.length + ' boxes' }),
+    el('label', { class: 'id-pill' }, 'ID', el('input', { type: 'text', value: w.id, onchange: e => {
+      const editing = editingWheel === w.id;
+      w.id = e.target.value.trim();
+      if (editing) editingWheel = w.id; // keep showing this wheel under its new ID
+      setDirty(true);
+      renderWheels();
+    } })),
+    el('button', { class: 'btn-x', textContent: '✕', title: 'Delete wheel', onclick: () => {
+      if (!confirm('Delete the "' + w.name + '" wheel?')) return;
+      state.wheels.splice(wi, 1);
+      setDirty(true);
+      renderWheels();
+    } }),
+  );
+
+  return el('section', { class: 'wheel' }, bar, boxes);
+}
+
+function addBox(w) {
+  const look = PALETTE[w.slices.length % PALETTE.length];
+  w.slices.push({ text: 'New prize', color: look.color, style: look.style, frequency: 50, webhook: '' });
+  setDirty(true);
+  renderWheels();
+  const row = document.querySelector('#wheelList .boxes');
+  if (row) row.scrollLeft = row.scrollWidth;
+}
+
+// ---------- keybind recording ----------
+// Saved as KeyboardEvent.code names, e.g. "Ctrl+Shift+KeyA" (the server knows how to press these)
+const KEY_NAMES = {
+  Space: 'Space', Enter: 'Enter', NumpadEnter: 'Num Enter', Tab: 'Tab', Escape: 'Esc', Backspace: 'Backspace',
+  Insert: 'Insert', Delete: 'Delete', Home: 'Home', End: 'End', PageUp: 'Page Up', PageDown: 'Page Down',
+  ArrowLeft: '←', ArrowUp: '↑', ArrowRight: '→', ArrowDown: '↓',
+  NumpadMultiply: 'Num *', NumpadAdd: 'Num +', NumpadSubtract: 'Num -', NumpadDecimal: 'Num .', NumpadDivide: 'Num /',
+  Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'",
+  Comma: ',', Period: '.', Slash: '/', Backquote: '`',
+};
+const MODIFIER_CODES = ['ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'];
+
+function keySupported(code) {
+  return code in KEY_NAMES || /^(Key[A-Z]|Digit\d|Numpad\d|F([1-9]|1\d|2[0-4]))$/.test(code);
+}
+
+function keyLabel(kb) {
+  return kb.split('+').map(p => KEY_NAMES[p] || p.replace(/^Key|^Digit/, '').replace(/^Numpad/, 'Num ')).join(' + ');
+}
+
+let recording = null;
+
+function startRecording(s, btn, done) {
+  stopRecording();
+  recording = { s, btn, done };
+  btn.classList.add('rec');
+  btn.textContent = 'Press a key… (Esc cancels)';
+}
+
+function stopRecording() {
+  if (!recording) return;
+  const r = recording;
+  recording = null;
+  r.btn.classList.remove('rec');
+  r.done();
+}
+
+// capture phase, so Ctrl+S / Esc / F5 etc. get recorded instead of doing their usual thing
+window.addEventListener('keydown', e => {
+  if (!recording) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if (MODIFIER_CODES.includes(e.code)) return; // wait for the actual key
+  if (e.code === 'Escape' && !e.ctrlKey && !e.shiftKey && !e.altKey) return stopRecording();
+  if (!keySupported(e.code)) return toast('That key can\'t be used - try another');
+  const mods = [e.ctrlKey && 'Ctrl', e.shiftKey && 'Shift', e.altKey && 'Alt'].filter(Boolean);
+  recording.s.keybind = [...mods, e.code].join('+');
+  setDirty(true);
+  stopRecording();
+}, true);
+
+document.addEventListener('mousedown', e => {
+  if (recording && e.target !== recording.btn) stopRecording();
+});
+
+async function testKeybind(kb) {
+  const d = await fetch('/api/test-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keybind: kb }) }).then(r => r.json());
+  toast(d.ok ? 'Click into your game - pressing ' + keyLabel(kb) + ' in 3 seconds' : d.error);
+}
+
+$('newWheel').onclick = () => {
+  const nums = state.wheels.map(w => Number(w.id)).filter(n => Number.isFinite(n));
+  const id = String(nums.length ? Math.max(...nums) + 1 : 0);
+  state.wheels.push({ id, name: 'New wheel', display: 'wheel', slices: [
+    { text: 'Prize 1', color: PALETTE[1].color, style: 'solid', frequency: 50, webhook: '' },
+    { text: 'Prize 2', color: PALETTE[7].color, style: 'solid', frequency: 50, webhook: '' },
+  ] });
+  setDirty(true);
+  selectWheel(id);
+};
+
+// ---------- colour picker ----------
+let pickerTarget = null;
+const picker = $('picker');
+PALETTE.forEach(p => {
+  const b = el('button', { title: p.style === 'solid' ? p.color : p.style });
+  b.style.background = lookCss(p);
+  b.addEventListener('click', () => {
+    if (!pickerTarget) return;
+    pickerTarget.slice.color = p.color;
+    pickerTarget.slice.style = p.style;
+    pickerTarget.done();
+    closePicker();
+  });
+  $('pickerGrid').append(b);
+});
+$('pickerCustom').addEventListener('input', e => {
+  if (!pickerTarget) return;
+  pickerTarget.slice.color = e.target.value;
+  pickerTarget.slice.style = 'solid';
+  pickerTarget.done();
+});
+
+// a photo goes on top of the box colour (same as the photo row under each box)
+$('pickerPhoto').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  const target = pickerTarget;
+  if (!file || !target) return;
+  $('pickerPhotoBtn').firstChild.textContent = 'Uploading… ';
+  const d = await uploadFile('image', file);
+  $('pickerPhotoBtn').firstChild.textContent = '🖼 Upload photo ';
+  if (!d.ok) return toast(d.error);
+  target.slice.image = d.name;
+  target.done();
+  closePicker();
+});
+$('pickerNoPhoto').addEventListener('click', () => {
+  if (!pickerTarget) return;
+  pickerTarget.slice.image = '';
+  pickerTarget.slice.hideText = false;
+  pickerTarget.done();
+  closePicker();
+});
+
+function openPicker(anchor, slice, done) {
+  pickerTarget = { slice, done };
+  $('pickerNoPhoto').hidden = !slice.image;
+  const r = anchor.getBoundingClientRect();
+  picker.classList.add('show');
+  const w = picker.offsetWidth, h = picker.offsetHeight;
+  picker.style.left = Math.min(window.innerWidth - w - 8, Math.max(8, r.left)) + 'px';
+  picker.style.top = (r.bottom + h + 8 > window.innerHeight ? r.top - h - 6 : r.bottom + 6) + 'px';
+  $('pickerCustom').value = slice.color;
+  [...$('pickerGrid').children].forEach((b, i) => b.classList.toggle('on', PALETTE[i].color === slice.color && PALETTE[i].style === slice.style));
+}
+
+function closePicker() {
+  picker.classList.remove('show');
+  pickerTarget = null;
+}
+
+document.addEventListener('mousedown', e => {
+  if (picker.classList.contains('show') && !picker.contains(e.target) && !e.target.classList.contains('swatch-btn')) closePicker();
+});
+$('wheelList').addEventListener('scroll', closePicker, true);
+
+// ---------- play ----------
+function renderPlay() {
+  const on = !!state.settings.acceptWebhooks;
+  $('autoSwitch').checked = on;
+  $('autoLabel').textContent = on ? 'ON — LISTENING FOR WEBHOOKS' : 'OFF — MANUAL ONLY';
+  $('autoLabel').className = 'label ' + (on ? 'on' : 'off');
+
+  $('autoLinks').replaceChildren(...state.wheels.map(w => el('div', { class: 'link-row' },
+    el('b', { textContent: w.name, title: w.name }),
+    el('span', { textContent: triggerUrl(w), title: triggerUrl(w) }),
+    styleSeg(w),
+    el('button', { class: 'btn btn-dark', textContent: 'Copy', onclick: () => copy(triggerUrl(w)) }),
+  )));
+
+  const sel = $('manualWheel');
+  const keep = sel.value;
+  sel.replaceChildren(...state.wheels.map(w => el('option', { value: w.id, textContent: w.name + ' (' + (w.display === 'bar' ? 'bar' : 'wheel') + ', ' + w.slices.length + ' boxes)' })));
+  if (state.wheels.some(w => w.id === keep)) sel.value = keep;
+  previewWheel();
+  updateQueue();
+}
+
+// Wheel / Bar picker for one wheel - saves straight away
+function styleSeg(w) {
+  return el('span', { class: 'seg', title: 'How this wheel looks on stream' },
+    ...[['wheel', '◎ WHEEL'], ['bar', '▭ BAR']].map(([v, label]) => el('button', {
+      class: (w.display || 'wheel') === v ? 'on' : '',
+      textContent: label,
+      onclick: () => setDisplay(w, v),
+    })));
+}
+
+async function setDisplay(w, display) {
+  const d = await fetch('/api/display', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: w.id, display }) }).then(r => r.json());
+  if (!d.ok) return toast(d.error);
+  w.display = d.display;
+  renderPlay();
+  toast(w.name + ' shows as a ' + (d.display === 'bar' ? 'bar' : 'wheel'));
+}
+
+function previewWheel() {
+  const w = state.wheels.find(x => x.id === $('manualWheel').value);
+  $('manualStyle').replaceChildren(w ? styleSeg(w) : '');
+  const frame = $('preview');
+  if (w && frame.contentWindow) frame.contentWindow.postMessage({ showWheel: w }, location.origin);
+}
+
+// Preview sound (remembered in this browser; OBS is unaffected)
+let previewSoundOn = false;
+try { previewSoundOn = localStorage.getItem('previewSound') === '1'; } catch (e) {}
+
+function sendPreviewSound() {
+  const b = $('previewSound');
+  b.textContent = previewSoundOn ? '🔊 Sound on' : '🔇 Muted';
+  b.classList.toggle('on', previewSoundOn);
+  const frame = $('preview');
+  if (frame.contentWindow) frame.contentWindow.postMessage({ previewSound: previewSoundOn }, location.origin);
+}
+
+$('previewSound').onclick = () => {
+  previewSoundOn = !previewSoundOn;
+  try { localStorage.setItem('previewSound', previewSoundOn ? '1' : '0'); } catch (e) {}
+  sendPreviewSound();
+};
+sendPreviewSound();
+
+$('preview').addEventListener('load', () => setTimeout(() => { previewWheel(); sendPreviewSound(); }, 300));
+$('manualWheel').onchange = previewWheel;
+
+$('autoSwitch').onchange = async e => {
+  const r = await fetch('/api/auto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: e.target.checked }) });
+  const d = await r.json();
+  state.settings.acceptWebhooks = d.on;
+  renderPlay();
+  toast(d.on ? 'Automatic spins ON' : 'Automatic spins OFF');
+};
+
+$('manualSpin').onclick = async () => {
+  const id = $('manualWheel').value;
+  if (!id) return toast('Make a wheel first');
+  const w = state.wheels.find(x => x.id === id);
+  if (dirty && !(await save())) return;
+  // usernames only come from the wheel webhooks; manual spins have none
+  const r = await fetch('/api/spin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+  const d = await r.json();
+  toast(d.ok ? (d.position > 1 ? 'Queued ' + d.wheel + ' (#' + d.position + ')' : 'Spinning ' + d.wheel) : d.error);
+};
+$('clearQueue').onclick = async () => { await fetch('/api/clear-queue', { method: 'POST' }); toast('Queue cleared'); };
+
+function updateQueue() {
+  $('queueInfo').textContent = (spinningNow ? 'Spinning now' : 'Idle') + ' · ' + queued + ' queued';
+}
+
+function renderHistory(list) {
+  const box = $('history');
+  box.replaceChildren();
+  if (!list.length) {
+    box.append(el('div', { class: 'hint', style: 'margin:0', textContent: 'No spins yet.' }));
+    return;
+  }
+  list.forEach(h => box.append(historyRow(h)));
+}
+
+function historyRow(h) {
+  const t = new Date(h.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return el('div', { class: 'hist' },
+    el('span', { class: 't', textContent: t }),
+    el('span', { class: 'u', textContent: h.userName || 'Manual spin' }, h.manual && h.userName ? el('span', { class: 'tag', textContent: 'MANUAL' }) : null),
+    el('span', { class: 'r' }, h.wheel + ' → ', el('b', { textContent: h.result })),
+  );
+}
+
+// ---------- customize (overlay look) ----------
+const DEFAULT_LOOK = {
+  font: 'Lilita One', fontFile: '', boxText: '#ffffff', boxOutline: '#111111',
+  tagBg: '#2b2b2b', tagText: '#ffffff', prize: '#ffd23f', pointer: '#ff7a1a', rim: '#ffd23f',
+  showPrize: true, prizeText: '{prize}!',
+  showQueue: true, queueText: '{count} more spin{s} queued', queueColor: '#ffffff', queueSize: 3.2,
+};
+const BUILT_IN_FONTS = ['Lilita One', 'Bangers', 'Luckiest Guy', 'Titan One', 'Bungee', 'Russo One', 'Black Ops One', 'Anton',
+  'Bebas Neue', 'Righteous', 'Chewy', 'Fredoka', 'Permanent Marker', 'Creepster', 'Orbitron', 'Press Start 2P'];
+const LOOK_COLOURS = [
+  ['boxText', 'Box text', 'Prize names on the boxes / slices'],
+  ['boxOutline', 'Outlines', 'Text outlines, borders and edges'],
+  ['tagBg', 'Name tag background', 'Username tag, banner and result card'],
+  ['tagText', 'Name tag text', ''],
+  ['prize', 'Prize text', 'What they won, and the username on the wheel'],
+  ['pointer', 'Pointer / gem', 'What points at the winning box'],
+  ['rim', 'Wheel rim', 'Roulette wheel edge and result card glow'],
+];
+let uploadedFonts = [];
+const panelFonts = new Set();
+
+// the one look object that gets saved - fill in any missing values in place, never replace it,
+// or the colour pickers end up editing a copy that's thrown away
+function getLook() {
+  const l = state.settings.look || (state.settings.look = {});
+  for (const k of Object.keys(DEFAULT_LOOK)) if (!(k in l)) l[k] = DEFAULT_LOOK[k];
+  return l;
+}
+
+// load a font into this page too, for the sample text
+function fontFamily(l) {
+  if (!l.fontFile) {
+    if (!panelFonts.has(l.font)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(l.font) + '&display=swap';
+      document.head.appendChild(link);
+      panelFonts.add(l.font);
+    }
+    return l.font;
+  }
+  const family = 'Wheel ' + l.fontFile.replace(/\.\w+$/, '').replace(/[^\w ]/g, '');
+  if (!panelFonts.has(family)) {
+    const face = new FontFace(family, 'url("/fonts/' + encodeURIComponent(l.fontFile) + '")');
+    document.fonts.add(face);
+    face.load().catch(() => toast('That font file could not be loaded'));
+    panelFonts.add(family);
+  }
+  return family;
+}
+
+async function loadUploadedFonts() {
+  try {
+    uploadedFonts = (await fetch('/api/fonts').then(r => r.json())).fonts;
+  } catch (e) {
+    uploadedFonts = [];
+  }
+}
+
+async function renderCustomize() {
+  const l = getLook();
+  await loadUploadedFonts();
+
+  // font list: your uploaded fonts first, then the built-in ones
+  const sel = $('lookFont');
+  const groups = [];
+  if (uploadedFonts.length) groups.push(el('optgroup', { label: 'Your fonts' }, ...uploadedFonts.map(f => el('option', { value: 'file:' + f, textContent: f.replace(/\.\w+$/, '') }))));
+  groups.push(el('optgroup', { label: 'Built-in fonts' }, ...BUILT_IN_FONTS.map(f => el('option', { value: f, textContent: f }))));
+  sel.replaceChildren(...groups);
+  sel.value = l.fontFile ? 'file:' + l.fontFile : l.font;
+
+  $('lookColours').replaceChildren(...LOOK_COLOURS.map(([key, label, hint]) => el('label', { class: 'colour-row' },
+    el('span', {}, label, hint ? el('small', { textContent: hint }) : null),
+    el('input', { type: 'color', value: l[key], oninput: e => { l[key] = e.target.value; lookChanged(); } }),
+  )));
+
+  const wsel = $('lookWheel');
+  const keep = wsel.value;
+  wsel.replaceChildren(...state.wheels.map(w => el('option', { value: w.id, textContent: w.name + ' (' + (w.display === 'bar' ? 'bar' : 'wheel') + ')' })));
+  if (state.wheels.some(w => w.id === keep)) wsel.value = keep;
+
+  $('lookShowPrize').checked = l.showPrize;
+  $('lookPrizeText').value = l.prizeText;
+  $('lookShowQueue').checked = l.showQueue;
+  $('lookQueueText').value = l.queueText;
+  $('lookQueueColor').value = l.queueColor;
+  $('lookQueueSize').value = l.queueSize;
+
+  paintSample();
+  sendLookToPreview();
+  sendWheelToPreview();
+}
+
+function paintSample() {
+  const l = getLook();
+  const s = $('fontSample');
+  s.style.fontFamily = "'" + fontFamily(l) + "', sans-serif";
+  s.style.background = l.tagBg;
+  s.style.color = l.tagText;
+  s.style.webkitTextStroke = '1.5px ' + l.boxOutline;
+}
+
+function lookChanged() {
+  setDirty(true);
+  paintSample();
+  sendLookToPreview();
+}
+
+function lookWheel() {
+  return state.wheels.find(w => w.id === $('lookWheel').value) || state.wheels[0];
+}
+
+// prize / queue text settings
+$('lookShowPrize').onchange = e => { getLook().showPrize = e.target.checked; lookChanged(); };
+$('lookPrizeText').oninput = e => { getLook().prizeText = e.target.value; lookChanged(); };
+$('lookShowQueue').onchange = e => { getLook().showQueue = e.target.checked; lookChanged(); };
+$('lookQueueText').oninput = e => { getLook().queueText = e.target.value; lookChanged(); };
+$('lookQueueColor').oninput = e => { getLook().queueColor = e.target.value; lookChanged(); };
+$('lookQueueSize').oninput = e => { getLook().queueSize = Number(e.target.value); lookChanged(); };
+
+// colour/font changes only send the look, so the preview recolours without redrawing the wheel
+function sendLookToPreview() {
+  const frame = $('lookPreview');
+  if (!frame.contentWindow) return;
+  frame.contentWindow.postMessage({ look: getLook() }, location.origin);
+  frame.contentWindow.postMessage({ sampleQueue: 2 }, location.origin); // so the queue text can be seen
+}
+
+function sendWheelToPreview() {
+  const frame = $('lookPreview');
+  const w = lookWheel();
+  if (frame.contentWindow && w) frame.contentWindow.postMessage({ showWheel: w }, location.origin);
+}
+
+$('lookPreview').addEventListener('load', () => setTimeout(() => { sendLookToPreview(); sendWheelToPreview(); }, 300));
+$('lookWheel').onchange = sendWheelToPreview;
+
+$('lookFont').onchange = e => {
+  const l = getLook();
+  const v = e.target.value;
+  if (v.startsWith('file:')) {
+    l.fontFile = v.slice(5);
+  } else {
+    l.font = v;
+    l.fontFile = '';
+  }
+  lookChanged();
+};
+
+$('fontFile').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const d = await uploadFile('font', file);
+  if (!d.ok) return toast(d.error);
+  getLook().fontFile = d.name;
+  await renderCustomize();
+  lookChanged();
+  toast('Font added - press Save to use it on stream');
+};
+
+$('lookReset').onclick = () => {
+  state.settings.look = { ...DEFAULT_LOOK };
+  renderCustomize();
+  lookChanged();
+};
+
+// a spin that only happens in this preview: no rewards, keys or OBS
+$('demoSpin').onclick = () => {
+  const w = lookWheel();
+  if (!w || !w.slices.length) return toast('Make a wheel with some boxes first');
+  const frame = $('lookPreview');
+  sendLookToPreview();
+  frame.contentWindow.postMessage({ demoSpin: {
+    wheel: w,
+    index: Math.floor(Math.random() * w.slices.length),
+    seed: Math.floor(Math.random() * 4294967296),
+    userName: 'coullsey_',
+    spinMs: (Number(state.settings.spinSeconds) || 7) * 1000,
+    resultMs: (Number(state.settings.resultSeconds) || 4) * 1000,
+    queued: 0,
+  } }, location.origin);
+};
+
+// ---------- uploads (fonts and box photos) ----------
+async function uploadFile(kind, file) {
+  if (file.size > 25 * 1024 * 1024) return { ok: false, error: 'File is too big (25 MB max)' };
+  try {
+    return await fetch('/api/upload?kind=' + kind + '&name=' + encodeURIComponent(file.name), { method: 'POST', body: file }).then(r => r.json());
+  } catch (e) {
+    return { ok: false, error: 'Upload failed' };
+  }
+}
+
+// ---------- settings ----------
+function renderSettings() {
+  const s = state.settings;
+  $('spinSeconds').value = s.spinSeconds;
+  $('resultSeconds').value = s.resultSeconds;
+  $('postWebhooks').checked = !!s.postWebhooks;
+  $('pressKeys').checked = s.pressKeys !== false;
+  $('sound').checked = !!s.sound;
+  $('alwaysVisible').checked = !!s.alwaysVisible;
+  $('overlayUrl').value = base() + '/overlay';
+  const cur = document.documentElement.dataset.theme;
+  $('themes').replaceChildren(...THEMES.map(t => el('button', { class: 'theme-swatch' + (t.id === cur ? ' on' : ''), onclick: () => setTheme(t.id) },
+    el('i', { style: 'background:' + t.c }), t.name)));
+}
+
+function setTheme(id) {
+  document.documentElement.dataset.theme = id;
+  try { localStorage.setItem('wheelTheme', id); } catch (e) {}
+  renderSettings();
+}
+
+$('spinSeconds').oninput = e => { state.settings.spinSeconds = Number(e.target.value) || 7; setDirty(true); };
+$('resultSeconds').oninput = e => { state.settings.resultSeconds = Number(e.target.value) || 0; setDirty(true); };
+['postWebhooks', 'pressKeys', 'sound', 'alwaysVisible'].forEach(id => $(id).addEventListener('change', e => { state.settings[id] = e.target.checked; setDirty(true); }));
+$('copyOverlay').onclick = () => copy(base() + '/overlay');
+
+// ---------- save / load ----------
+async function save() {
+  const ids = state.wheels.map(w => w.id);
+  if (ids.some(id => !id) || new Set(ids).size !== ids.length) {
+    toast('Every wheel needs its own ID');
+    return false;
+  }
+  const r = await fetch('/api/wheels', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ settings: state.settings, wheels: state.wheels }) });
+  const d = await r.json();
+  if (!d.ok) {
+    toast(d.error || 'Save failed');
+    return false;
+  }
+  setDirty(false);
+  toast('Saved');
+  return true;
+}
+
+document.querySelectorAll('[data-save]').forEach(b => b.onclick = save);
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  if (e.key === 'Escape') closePicker();
+});
+window.addEventListener('beforeunload', e => { if (dirty) e.preventDefault(); });
+
+async function load() {
+  const d = await fetch('/api/wheels').then(r => r.json());
+  port = d.port;
+  state = { settings: d.settings, wheels: d.wheels };
+  queued = d.queued;
+  spinningNow = d.spinning;
+  renderHistory(d.history || []);
+  setDirty(false);
+  show(location.hash.slice(1) || 'menu');
+}
+
+// ---------- live events ----------
+function connectEvents() {
+  const es = new EventSource('/events');
+  // the browser gives up for good on some errors (e.g. while the wheel restarts) - keep trying
+  es.onerror = () => {
+    if (es.readyState !== EventSource.CLOSED) return;
+    es.close();
+    setTimeout(connectEvents, 2000);
+  };
+  es.addEventListener('hello', e => { const d = JSON.parse(e.data); queued = d.queued; spinningNow = d.spinning; renderHistory(d.history || []); updateQueue(); });
+  es.addEventListener('spin', e => { spinningNow = true; queued = JSON.parse(e.data).queued; updateQueue(); });
+  es.addEventListener('idle', e => { spinningNow = false; queued = JSON.parse(e.data).queued; updateQueue(); });
+  es.addEventListener('queue', e => { queued = JSON.parse(e.data).queued; updateQueue(); });
+  es.addEventListener('result', e => {
+    const box = $('history');
+    if (box.querySelector('.hint')) box.replaceChildren();
+    box.prepend(historyRow(JSON.parse(e.data)));
+    while (box.children.length > 30) box.lastChild.remove();
+  });
+  es.addEventListener('display', e => {
+    const d = JSON.parse(e.data);
+    const w = state.wheels.find(x => x.id === d.id);
+    if (!w || w.display === d.display) return;
+    w.display = d.display;
+    if (!$('play').hidden) renderPlay();
+    if (!$('wheels').hidden) renderWheels();
+  });
+  es.addEventListener('auto', e => {
+    state.settings.acceptWebhooks = JSON.parse(e.data).on;
+    if (!$('play').hidden) renderPlay();
+    renderMenu();
+  });
+}
+
+// ---------- auto updates (desktop app only) ----------
+// main.js checks GitHub Releases on launch and downloads in the background;
+// the button only shows once there's something to do.
+function initUpdater() {
+  const api = window.updateAPI;
+  if (!api) return; // the panel opened in a normal browser
+  api.getVersion().then(v => { $('appVersion').textContent = 'v' + v; });
+  $('appCard').hidden = false;
+  $('openDataFolder').onclick = () => api.openDataFolder();
+  $('checkUpdateBtn').hidden = false;
+  const btn = $('updateBtn');
+  api.onStatus(st => {
+    btn.classList.remove('busy');
+    if (st.state === 'downloading') {
+      btn.hidden = false;
+      btn.classList.add('busy');
+      btn.textContent = '⬇ Downloading update ' + Math.round(st.percent || 0) + '%';
+    } else if (st.state === 'ready') {
+      btn.hidden = false;
+      btn.textContent = '⬆ Restart to update to v' + st.version;
+    } else {
+      btn.hidden = true;
+    }
+  });
+}
+
+let updateMsgTimer = null;
+function setUpdateMsg(text, kind, keep) {
+  const m = $('updateMsg');
+  m.textContent = text;
+  m.className = 'update-msg' + (kind ? ' ' + kind : '');
+  clearTimeout(updateMsgTimer);
+  if (!keep) updateMsgTimer = setTimeout(() => { m.textContent = ''; }, 6000);
+}
+
+$('checkUpdateBtn').onclick = async () => {
+  const btn = $('checkUpdateBtn');
+  if (!window.updateAPI || btn.disabled) return;
+  btn.disabled = true;
+  setUpdateMsg('Checking…', '', true);
+  let res;
+  try {
+    res = await window.updateAPI.check();
+  } catch (e) {
+    res = { result: 'error', error: e.message };
+  }
+  btn.disabled = false;
+  if (res.result === 'latest') setUpdateMsg('✓ You\'re up to date', 'ok');
+  else if (res.result === 'available') setUpdateMsg('Update v' + res.version + ' found, downloading…', 'ok');
+  else if (res.result === 'ready') setUpdateMsg('v' + res.version + ' is ready, press the green button to install', 'ok');
+  else if (res.result === 'dev') setUpdateMsg('Updates only work in the installed app');
+  else setUpdateMsg('Couldn\'t check for updates. Are you online?', 'error');
+};
+
+$('updateBtn').onclick = async () => {
+  const btn = $('updateBtn');
+  if (btn.classList.contains('busy') || !window.updateAPI) return;
+  if (dirty && !(await save())) return; // don't lose unsaved changes to the restart
+  window.updateAPI.install();
+};
+
+connectEvents();
+initUpdater();
+load();
+</script>
+</body>
+</html>

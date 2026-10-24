@@ -1,0 +1,65 @@
+{
+  "name": "coullseys-lucky-wheel",
+  "productName": "Coullseys Lucky Wheel",
+  "version": "1.0.0",
+  "description": "Coullsey's Lucky Wheel - webhook spin wheel for TikTok LIVE",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always"
+  },
+  "author": "Coullsey",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.coullsey.luckywheel",
+    "productName": "Coullseys Lucky Wheel",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Coullsey",
+        "repo": "coullseys-lucky-wheel",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Coullseys Lucky Wheel",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico",
+      "include": "build/installer.nsh",
+      "artifactName": "Coullseys-Lucky-Wheel-Setup-${version}.${ext}"
+    },
+    "extraResources": [
+      "icon.ico"
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "server.js",
+      "public/**/*",
+      "icon.ico",
+      "Wheel Spin.mp3",
+      "Ding.mp3",
+      "Coullsey Wheel.png"
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}
