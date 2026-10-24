@@ -1,8 +1,0 @@
-node_modules/
-dist/
-
-# your own data - the app keeps these in AppData
-wheels.json
-images/
-fonts/
-*.log
