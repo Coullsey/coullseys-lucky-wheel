@@ -113,8 +113,9 @@
   .wheel-tab small { font-family: 'Rajdhani', sans-serif; font-size: 11px; color: var(--muted); margin-left: 6px; letter-spacing: 0; text-transform: none; }
   .wheel-tab:hover { border-color: var(--accent); color: var(--text); }
   .wheel-tab.on { background: rgba(var(--accent-rgb), 0.12); border-color: var(--accent); color: var(--accent); }
-  .wheel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
-  .wheel-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-3); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .wheel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; }
+  /* stays at the top while you scroll down through the boxes */
+  .wheel-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-3); border-bottom: 1px solid var(--border); flex-wrap: wrap; position: sticky; top: -16px; z-index: 5; border-radius: 8px 8px 0 0; }
   .wheel-name { width: 170px; font-family: 'Orbitron', sans-serif !important; font-size: 14px !important; font-weight: 900 !important; text-transform: uppercase; color: var(--accent) !important; text-align: center; letter-spacing: 1px; }
   .wheel-url { flex: 1; min-width: 200px; font-size: 13px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: Consolas, monospace; }
   .meta { font-size: 12px; color: var(--muted); white-space: nowrap; font-weight: 700; }
@@ -125,12 +126,9 @@
   .seg button.on { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
   .id-pill { display: inline-flex; align-items: center; gap: 4px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 1px; }
   .id-pill input { width: 44px; text-align: center; padding: 4px; font-size: 13px; }
-  .boxes { display: flex; gap: 10px; padding: 12px; overflow-x: auto; scroll-snap-type: x proximity; }
-  .boxes::-webkit-scrollbar { height: 10px; }
-  .boxes::-webkit-scrollbar-track { background: var(--bg-2); }
-  .boxes::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 5px; }
-  .boxes::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-  .box { flex: 0 0 200px; background: var(--bg-2); border: 1px solid var(--border-2); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 7px; scroll-snap-align: start; }
+  /* boxes fill the width in rows; the page scrolls up and down */
+  .boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 10px; padding: 12px; }
+  .box { min-width: 0; background: var(--bg-2); border: 1px solid var(--border-2); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 7px; }
   .box:hover { border-color: var(--faint); }
   .box-top { display: flex; align-items: center; gap: 6px; }
   .box-num { font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; color: var(--muted); flex: 1; letter-spacing: 1px; }
@@ -155,7 +153,7 @@
   .key-test { width: 26px; height: 26px; padding: 0; background: var(--input); color: var(--accent); border: 1px solid var(--border-2); border-radius: 4px; cursor: pointer; flex-shrink: 0; font-size: 11px; }
   .key-test:hover { border-color: var(--accent); }
   .box-hook { font-size: 11px !important; color: var(--text-2) !important; font-family: Consolas, monospace !important; font-weight: 400 !important; }
-  .add-tile { flex: 0 0 90px; border: 1px dashed var(--border-2); border-radius: 6px; background: transparent; color: var(--muted); font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
+  .add-tile { min-height: 150px; border: 1px dashed var(--border-2); border-radius: 6px; background: transparent; color: var(--muted); font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
   .add-tile:hover { color: var(--accent); border-color: var(--accent); }
   .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 15px; }
 
@@ -732,14 +730,6 @@ function renderWheel(w, wi) {
   boxes.append(el('button', { class: 'add-tile', textContent: '+ ADD BOX', onclick: () => addBox(w) }));
   refreshChances();
 
-  // mouse wheel scrolls the box row sideways
-  boxes.addEventListener('wheel', e => {
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && boxes.scrollWidth > boxes.clientWidth) {
-      e.preventDefault();
-      boxes.scrollLeft += e.deltaY;
-    }
-  }, { passive: false });
-
   const bar = el('div', { class: 'wheel-bar' },
     el('input', { type: 'text', class: 'wheel-name', value: w.name, oninput: e => { w.name = e.target.value; setDirty(true); renderWheelTabs(); } }),
     el('button', { class: 'btn btn-gold', textContent: 'Add box', onclick: () => addBox(w) }),
@@ -775,8 +765,7 @@ function addBox(w) {
   w.slices.push({ text: 'New prize', color: look.color, style: look.style, frequency: 50, webhook: '' });
   setDirty(true);
   renderWheels();
-  const row = document.querySelector('#wheelList .boxes');
-  if (row) row.scrollLeft = row.scrollWidth;
+  $('wheelList').scrollTop = $('wheelList').scrollHeight; // show the new box at the bottom
 }
 
 // ---------- keybind recording ----------
