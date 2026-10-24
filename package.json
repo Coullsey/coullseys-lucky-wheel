@@ -1,7 +1,7 @@
 {
   "name": "coullseys-lucky-wheel",
   "productName": "Coullseys Lucky Wheel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Coullsey's Lucky Wheel - webhook spin wheel for TikTok LIVE",
   "main": "main.js",
   "scripts": {
